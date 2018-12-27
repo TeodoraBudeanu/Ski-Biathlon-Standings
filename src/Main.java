@@ -5,6 +5,7 @@ import Exceptions.TimeValidationException;
 
 import java.text.ParseException;
 
+
 public class Main {
     public static void main(String[] args) throws ParseException, NameValidationException, IdValidationException, TimeValidationException, ShootingRangeValidationException {
 

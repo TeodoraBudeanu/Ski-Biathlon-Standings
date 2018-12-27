@@ -1,6 +1,12 @@
+import Exceptions.IdValidationException;
+import Exceptions.NameValidationException;
+import Exceptions.ShootingRangeValidationException;
+import Exceptions.TimeValidationException;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 
 public class Athlete {
     private int athleteNumber;
@@ -23,6 +29,7 @@ public class Athlete {
         this.firstShootingRange = firstShootingRange;
         this.secondShootingRange = secondShootingRange;
         this.thirdShootingRange = thirdShootingRange;
+
     }
 
     public Date formatTimeResultAsDate(String time) throws ParseException {
@@ -62,13 +69,63 @@ public class Athlete {
         this.penaltySeconds = penaltySeconds;
     }
 
-
+    public void validate() throws IdValidationException, NameValidationException, TimeValidationException, ShootingRangeValidationException {
+        validateId();
+        validateName();
+        validateSkiTimeResult();
+        validateShootingRange(firstShootingRange);
+        validateShootingRange(secondShootingRange);
+        validateShootingRange(thirdShootingRange);
+    }
 
     @Override
     public String toString() {
-        if(finalTimeResult!=null)
-        return athleteName + " " + formatter.format(finalTimeResult) + " (" +
-                skiTimeResult + " + " + penaltySeconds + ")";
-        else return athleteNumber + " " + athleteName + " " + countryCode + " " + skiTimeResult + "\n" + "Shooting Ranges: " + firstShootingRange + "," + secondShootingRange + "," + thirdShootingRange;
+        if (finalTimeResult != null)
+            return athleteName + " " + formatter.format(finalTimeResult) + " (" +
+                    skiTimeResult + " + " + penaltySeconds + ")";
+        else
+            return athleteNumber + " " + athleteName + " " + countryCode + " " + skiTimeResult + "\n" +
+                    "Shooting Ranges: " + firstShootingRange + "," + secondShootingRange + "," + thirdShootingRange;
+    }
+
+    public void validateId() throws IdValidationException {
+        if (!(this.athleteNumber > 0 && this.athleteNumber < 999))
+            throw new IdValidationException("The athlete number " + '"' + athleteNumber +
+                    '"' + " you have entered is not valid.");
+    }
+
+    public void validateName() throws NameValidationException {
+        if (!athleteName.matches("[a-zA-z]+([ '-][a-zA-Z]+)*")) {
+            throw new NameValidationException("The name " + '"' + athleteName + '"' +
+                    " read from the csv file is invalid. Please edit it and try again.");
+        }
+    }
+
+    public void validateSkiTimeResult() throws TimeValidationException {
+        if (skiTimeResult.length() != 5) {
+            throw new TimeValidationException("The ski time result " + '"' + skiTimeResult + '"' +
+                    " read from the csv file is invalid. Please edit it and try again.");
+        }
+        if (!Character.toString(skiTimeResult.charAt(0)).matches("[0-5]") ||
+                !Character.toString(skiTimeResult.charAt(1)).matches("[0-9]") ||
+                !Character.toString(skiTimeResult.charAt(3)).matches("[0-5]") ||
+                !Character.toString(skiTimeResult.charAt(4)).matches("[0-9]") ||
+                skiTimeResult.charAt(2) != ':') {
+            throw new TimeValidationException("The ski time result " + '"' + skiTimeResult + '"' + " read from the " +
+                    "csv file is invalid. Please make sure you have the proper format: mm:ss and try again.");
+        }
+
+    }
+
+    public void validateShootingRange(String s) throws ShootingRangeValidationException {
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) != 'x' && s.charAt(i) != 'o') {
+                throw new ShootingRangeValidationException("The Shooting Range" + '"' + s + '"' + " read from the "
+                        + "csv file contains the following invalid character: " + s.charAt(i) +
+                        ". Please make sure you have the proper format and try again.");
+            }
+        }
     }
 }
+
+

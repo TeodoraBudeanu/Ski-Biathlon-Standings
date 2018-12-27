@@ -1,3 +1,8 @@
+import Exceptions.IdValidationException;
+import Exceptions.NameValidationException;
+import Exceptions.ShootingRangeValidationException;
+import Exceptions.TimeValidationException;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,14 +13,14 @@ public class FileProcessor {
 
     private Standings athletesStandings = new Standings();
 
-    public void parseAthletes() throws ParseException {
+    public void parseAthletes() throws ParseException, NameValidationException, IdValidationException, TimeValidationException, ShootingRangeValidationException {
         readAthletesfromFile();
         athletesStandings.addPenalties();
         athletesStandings.sort();
         athletesStandings.printStandings();
     }
 
-    public void readAthletesfromFile() {
+    public void readAthletesfromFile() throws NameValidationException, IdValidationException, TimeValidationException, ShootingRangeValidationException {
 
         File f = new File("./resources/data.csv");
 
@@ -36,8 +41,8 @@ public class FileProcessor {
 
             for (String line : lines) {
                 String[] tokens = line.split(",");
-
                 Athlete a = new Athlete(Integer.parseInt(tokens[0]), tokens[1], tokens[2], tokens[3], tokens[4], tokens[5], tokens[6]);
+                a.validate();
                 athletesStandings.add(a);
             }
 
