@@ -5,7 +5,10 @@ import Exceptions.TimeValidationException;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 
 public class Athlete {
@@ -16,10 +19,7 @@ public class Athlete {
     private String firstShootingRange;
     private String secondShootingRange;
     private String thirdShootingRange;
-    private Date finalTimeResult;
-    private int penaltySeconds;
-
-    SimpleDateFormat formatter = new SimpleDateFormat("mm:ss");
+    private String finalTimeResult;
 
     public Athlete(int athleteNumber, String athleteName, String countryCode, String skiTimeResult, String firstShootingRange, String secondShootingRange, String thirdShootingRange) {
         this.athleteNumber = athleteNumber;
@@ -29,44 +29,7 @@ public class Athlete {
         this.firstShootingRange = firstShootingRange;
         this.secondShootingRange = secondShootingRange;
         this.thirdShootingRange = thirdShootingRange;
-
-    }
-
-    public Date formatTimeResultAsDate(String time) throws ParseException {
-        Date date = formatter.parse(time);
-        return date;
-    }
-
-    public Date getFinalTimeResult() {
-        return finalTimeResult;
-    }
-
-    public void setFinalTimeResult(Date finalTimeResult) {
-        this.finalTimeResult = finalTimeResult;
-    }
-
-    public String getSkiTimeResult() {
-        return skiTimeResult;
-    }
-
-    public String getFirstShootingRange() {
-        return firstShootingRange;
-    }
-
-    public String getSecondShootingRange() {
-        return secondShootingRange;
-    }
-
-    public String getThirdShootingRange() {
-        return thirdShootingRange;
-    }
-
-    public int getPenaltySeconds() {
-        return penaltySeconds;
-    }
-
-    public void setPenaltySeconds(int penaltySeconds) {
-        this.penaltySeconds = penaltySeconds;
+        this.finalTimeResult = addPenalties(skiTimeResult, calculatePenalty());
     }
 
     public void validate() throws IdValidationException, NameValidationException, TimeValidationException, ShootingRangeValidationException {
@@ -78,30 +41,63 @@ public class Athlete {
         validateShootingRange(thirdShootingRange);
     }
 
+    private String addPenalties(String time, int penalty) {
+        SimpleDateFormat df = new SimpleDateFormat("mm:ss");
+        try {
+            Date date = df.parse(time);
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(date);
+            cal.add(Calendar.SECOND, penalty);
+            return df.format(cal.getTime());
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return "0";
+    }
+
+    private int calculatePenalty() {
+        List<String> shootingResults = new ArrayList<>();
+        int missedShots = 0;
+
+        shootingResults.add(firstShootingRange);
+        shootingResults.add(secondShootingRange);
+        shootingResults.add(thirdShootingRange);
+
+        for (String result : shootingResults) {
+            for (int i = 0; i < result.length(); i++) {
+                if (result.charAt(i) == 'o') {
+                    missedShots++;
+                }
+            }
+        }
+        return missedShots*10;
+    }
+
     @Override
     public String toString() {
         if (finalTimeResult != null)
-            return athleteName + " " + formatter.format(finalTimeResult) + " (" +
-                    skiTimeResult + " + " + penaltySeconds + ")";
+            return athleteName + " " + finalTimeResult + " (" +
+                    skiTimeResult + " + " + calculatePenalty() * 10 + ")";
         else
             return athleteNumber + " " + athleteName + " " + countryCode + " " + skiTimeResult + "\n" +
                     "Shooting Ranges: " + firstShootingRange + "," + secondShootingRange + "," + thirdShootingRange;
     }
 
-    public void validateId() throws IdValidationException {
+    private void validateId() throws IdValidationException {
         if (!(this.athleteNumber > 0 && this.athleteNumber < 999))
             throw new IdValidationException("The athlete number " + '"' + athleteNumber +
                     '"' + " you have entered is not valid.");
     }
 
-    public void validateName() throws NameValidationException {
+    private void validateName() throws NameValidationException {
         if (!athleteName.matches("[a-zA-z]+([ '-][a-zA-Z]+)*")) {
             throw new NameValidationException("The name " + '"' + athleteName + '"' +
                     " read from the csv file is invalid. Please edit it and try again.");
         }
     }
 
-    public void validateSkiTimeResult() throws TimeValidationException {
+    private void validateSkiTimeResult() throws TimeValidationException {
         if (skiTimeResult.length() != 5) {
             throw new TimeValidationException("The ski time result " + '"' + skiTimeResult + '"' +
                     " read from the csv file is invalid. Please edit it and try again.");
@@ -117,7 +113,11 @@ public class Athlete {
 
     }
 
-    public void validateShootingRange(String s) throws ShootingRangeValidationException {
+    private void validateShootingRange(String s) throws ShootingRangeValidationException {
+        if(s.length()!=5){
+            throw new ShootingRangeValidationException("The Shooting Range" + '"' + s + '"' + " read from the csv " +
+                    "file does not have the proper length. Please make sure you have the proper format and try again.");
+        }
         for (int i = 0; i < s.length(); i++) {
             if (s.charAt(i) != 'x' && s.charAt(i) != 'o') {
                 throw new ShootingRangeValidationException("The Shooting Range" + '"' + s + '"' + " read from the "
@@ -126,6 +126,12 @@ public class Athlete {
             }
         }
     }
+
+
+    public String getFinalTimeResult() {
+        return finalTimeResult;
+    }
+
 }
 
 
